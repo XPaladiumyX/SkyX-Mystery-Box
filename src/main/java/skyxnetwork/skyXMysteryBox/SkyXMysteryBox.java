@@ -14,6 +14,7 @@ import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -57,8 +58,10 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             if (config.contains("mystery_boxes." + boxId)) {
                 String boxName = config.getString("mystery_boxes." + boxId + ".name");
                 String materialName = config.getString("mystery_boxes." + boxId + ".material", "PLAYER_HEAD");
-                Material material = Material.valueOf(materialName);
                 String textureUrl = config.getString("mystery_boxes." + boxId + ".texture");
+
+                Material material = Material.matchMaterial(materialName);
+                if (material == null) material = Material.PLAYER_HEAD;
 
                 ItemStack boxItem = new ItemStack(material, 1);
                 ItemMeta boxMeta = boxItem.getItemMeta();
@@ -71,39 +74,36 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                         coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
                     }
                     boxMeta.setLore(coloredLore);
-
-                    // Tag pour empêcher le renommage
                     boxMeta.getPersistentDataContainer().set(new NamespacedKey(this, "unrenamable"), PersistentDataType.BYTE, (byte) 1);
                     boxItem.setItemMeta(boxMeta);
                 }
 
                 if (material == Material.PLAYER_HEAD && textureUrl != null && !textureUrl.isEmpty()) {
                     String base64Texture = TextureUtils.getBase64FromURL(textureUrl);
-                    applyTextureToItem(boxItem, base64Texture);
+                    applyTextureToItem(boxItem, base64Texture, textureUrl);
                 }
 
                 targetPlayer.getInventory().addItem(boxItem);
                 sender.sendMessage("Gave " + targetPlayerName + " a " + boxName + "!");
             } else {
                 sender.sendMessage("Box ID '" + boxId + "' not found in the config.");
-                return false;
             }
             return true;
         }
 
+        // Correction : vérification de la commande /skyxmysterybox
         if (command.getName().equalsIgnoreCase("skyxmysterybox") && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             if (sender.hasPermission("skyxmysterybox.reload")) {
                 reloadConfig();
                 config = getConfig();
                 sender.sendMessage("Config reloaded successfully!");
-                return true;
             } else {
                 sender.sendMessage("You do not have permission to execute this command.");
-                return false;
             }
+            return true;  // Important : retourne true pour confirmer que la commande a été traitée
         }
 
-        return false;
+        return false; // Retour par défaut si aucune commande ne correspond
     }
 
     public static class TextureUtils {
@@ -113,13 +113,14 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         }
     }
 
-    public static void applyTextureToItem(ItemStack item, String base64Texture) {
+    public static void applyTextureToItem(ItemStack item, String base64Texture, String textureUrl) {
         if (item.getType() != Material.PLAYER_HEAD) return;
 
         ItemMeta itemMeta = item.getItemMeta();
-        if (itemMeta instanceof org.bukkit.inventory.meta.SkullMeta) {
-            org.bukkit.inventory.meta.SkullMeta skullMeta = (org.bukkit.inventory.meta.SkullMeta) itemMeta;
-            com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), null);
+        if (itemMeta instanceof SkullMeta) {
+            SkullMeta skullMeta = (SkullMeta) itemMeta;
+            UUID textureUUID = UUID.nameUUIDFromBytes(textureUrl.getBytes());
+            com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(textureUUID, null);
             profile.getProperties().put("textures", new com.mojang.authlib.properties.Property("textures", base64Texture));
 
             try {
