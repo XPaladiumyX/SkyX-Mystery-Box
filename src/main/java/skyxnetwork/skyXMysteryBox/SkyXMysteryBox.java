@@ -3,6 +3,7 @@ package skyxnetwork.skyXMysteryBox;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -13,6 +14,7 @@ import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -34,6 +36,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         getLogger().info("SkyX Mystery Box plugin disabled!");
     }
 
+    // Commande givemysterybox <player> <box_id>
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("givemysterybox")) {
@@ -54,12 +57,8 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             if (config.contains("mystery_boxes." + boxId)) {
                 String boxName = config.getString("mystery_boxes." + boxId + ".name");
                 String materialName = config.getString("mystery_boxes." + boxId + ".material", "PLAYER_HEAD");
-                Material material = Material.getMaterial(materialName.toUpperCase());
-
-                if (material == null) {
-                    sender.sendMessage("Invalid material specified for the box: " + materialName);
-                    return false;
-                }
+                Material material = Material.valueOf(materialName);
+                String textureUrl = config.getString("mystery_boxes." + boxId + ".texture");
 
                 ItemStack boxItem = new ItemStack(material, 1);
                 ItemMeta boxMeta = boxItem.getItemMeta();
@@ -72,15 +71,15 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                         coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
                     }
                     boxMeta.setLore(coloredLore);
+
+                    // Tag pour empêcher le renommage
+                    boxMeta.getPersistentDataContainer().set(new NamespacedKey(this, "unrenamable"), PersistentDataType.BYTE, (byte) 1);
                     boxItem.setItemMeta(boxMeta);
                 }
 
-                if (material == Material.PLAYER_HEAD) {
-                    String textureUrl = config.getString("mystery_boxes." + boxId + ".texture");
-                    if (textureUrl != null && !textureUrl.isEmpty()) {
-                        String base64Texture = TextureUtils.getBase64FromURL(textureUrl);
-                        applyTextureToItem(boxItem, base64Texture);
-                    }
+                if (material == Material.PLAYER_HEAD && textureUrl != null && !textureUrl.isEmpty()) {
+                    String base64Texture = TextureUtils.getBase64FromURL(textureUrl);
+                    applyTextureToItem(boxItem, base64Texture);
                 }
 
                 targetPlayer.getInventory().addItem(boxItem);
@@ -118,8 +117,6 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         if (item.getType() != Material.PLAYER_HEAD) return;
 
         ItemMeta itemMeta = item.getItemMeta();
-        if (itemMeta == null) return;
-
         if (itemMeta instanceof org.bukkit.inventory.meta.SkullMeta) {
             org.bukkit.inventory.meta.SkullMeta skullMeta = (org.bukkit.inventory.meta.SkullMeta) itemMeta;
             com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), null);
@@ -141,7 +138,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
 
-        if (item != null && item.getType() != Material.AIR && event.getAction().toString().contains("RIGHT_CLICK")) {
+        if (item != null && event.getAction().toString().contains("RIGHT_CLICK") && item.getAmount() > 0) {
             ItemMeta meta = item.getItemMeta();
             if (meta != null && meta.hasDisplayName()) {
                 String itemName = meta.getDisplayName();
@@ -158,7 +155,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
     }
 
     private void consumeMysteryBox(Player player, ItemStack item, String boxId) {
-        player.getInventory().remove(item);
+        item.setAmount(item.getAmount() - 1);
         giveReward(player, boxId);
     }
 
@@ -171,26 +168,23 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         int roll = rand.nextInt(totalChance);
 
         if (roll < commonChance) {
-            List<String> commonItems = config.getStringList("mystery_boxes." + boxId + ".rewards.common.items");
-            for (String item : commonItems) {
-                String[] itemData = item.split(":");
-                Material material = Material.valueOf(itemData[0]);
-                int amount = Integer.parseInt(itemData[1]);
-                player.getInventory().addItem(new ItemStack(material, amount));
-            }
-            List<String> commonCommands = config.getStringList("mystery_boxes." + boxId + ".rewards.common.command");
-            executeCommands(player, commonCommands);
+            distributeRewards(player, boxId, "common");
         } else {
-            List<String> rareItems = config.getStringList("mystery_boxes." + boxId + ".rewards.rare.items");
-            for (String item : rareItems) {
-                String[] itemData = item.split(":");
-                Material material = Material.valueOf(itemData[0]);
-                int amount = Integer.parseInt(itemData[1]);
-                player.getInventory().addItem(new ItemStack(material, amount));
-            }
-            List<String> rareCommands = config.getStringList("mystery_boxes." + boxId + ".rewards.rare.command");
-            executeCommands(player, rareCommands);
+            distributeRewards(player, boxId, "rare");
         }
+    }
+
+    private void distributeRewards(Player player, String boxId, String rewardType) {
+        List<String> items = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".items");
+        for (String item : items) {
+            String[] itemData = item.split(":");
+            Material material = Material.valueOf(itemData[0]);
+            int amount = Integer.parseInt(itemData[1]);
+            player.getInventory().addItem(new ItemStack(material, amount));
+        }
+
+        List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
+        executeCommands(player, commands);
     }
 
     private void executeCommands(Player player, List<String> commands) {
@@ -203,15 +197,11 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
     @EventHandler
     public void onAnvilRename(PrepareAnvilEvent event) {
         ItemStack item = event.getResult();
-        if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-            String itemName = item.getItemMeta().getDisplayName();
-
-            for (String boxId : config.getConfigurationSection("mystery_boxes").getKeys(false)) {
-                if (itemName.equalsIgnoreCase(ChatColor.translateAlternateColorCodes('&', config.getString("mystery_boxes." + boxId + ".name")))) {
-                    event.setResult(null);
-                    event.getInventory().setRepairCost(0);
-                    return;
-                }
+        if (item != null && item.hasItemMeta()) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta.getPersistentDataContainer().has(new NamespacedKey(this, "unrenamable"), PersistentDataType.BYTE)) {
+                event.setResult(null);
+                event.getInventory().setRepairCost(0);
             }
         }
     }
