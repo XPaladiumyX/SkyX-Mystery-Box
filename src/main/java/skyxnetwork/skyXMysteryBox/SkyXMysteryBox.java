@@ -60,10 +60,16 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                 ItemStack boxItem = new ItemStack(Material.PLAYER_HEAD, 1);
                 ItemMeta boxMeta = boxItem.getItemMeta();
 
-                // Appliquer le nom et le lore à l'item
+                // Appliquer le nom et le lore à l'item avec support des couleurs
                 if (boxMeta != null) {
                     boxMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', boxName));
-                    boxMeta.setLore(config.getStringList("mystery_boxes." + boxId + ".lore"));
+
+                    // Traduire les couleurs dans le lore
+                    List<String> lore = config.getStringList("mystery_boxes." + boxId + ".lore");
+                    for (int i = 0; i < lore.size(); i++) {
+                        lore.set(i, ChatColor.translateAlternateColorCodes('&', lore.get(i)));
+                    }
+                    boxMeta.setLore(lore);
                     boxItem.setItemMeta(boxMeta);
                 }
 
@@ -107,29 +113,33 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null && meta.hasDisplayName()) {
                 String itemName = meta.getDisplayName();
-                // Vérifier si l'item est une boîte mystère, ici on assume "Basic Mystery Box"
-                if (itemName.equalsIgnoreCase(config.getString("mystery_boxes.basic_box.name"))) {
-                    event.setCancelled(true);
-                    consumeMysteryBox(player, item);
+
+                // Vérifier si l'item correspond à une boîte mystère définie dans le config.yml
+                for (String boxId : config.getConfigurationSection("mystery_boxes").getKeys(false)) {
+                    if (itemName.equalsIgnoreCase(ChatColor.translateAlternateColorCodes('&', config.getString("mystery_boxes." + boxId + ".name")))) {
+                        event.setCancelled(true);
+                        consumeMysteryBox(player, item, boxId);
+                        return;
+                    }
                 }
             }
         }
     }
 
-    private void consumeMysteryBox(Player player, ItemStack item) {
+    private void consumeMysteryBox(Player player, ItemStack item, String boxId) {
         // Retirer la boîte mystère de l'inventaire
         player.getInventory().remove(item);
 
         // Choisir une récompense aléatoire en fonction des chances définies dans le config.yml
-        giveReward(player);
+        giveReward(player, boxId);
     }
 
-    private void giveReward(Player player) {
+    private void giveReward(Player player, String boxId) {
         Random rand = new Random();
 
         // Chance de chaque type de récompense (commun, rare, légendaire)
-        int commonChance = config.getInt("mystery_boxes.basic_box.rewards.common.chance");
-        int rareChance = config.getInt("mystery_boxes.basic_box.rewards.rare.chance");
+        int commonChance = config.getInt("mystery_boxes." + boxId + ".rewards.common.chance");
+        int rareChance = config.getInt("mystery_boxes." + boxId + ".rewards.rare.chance");
 
         // Calcul de la chance totale
         int totalChance = commonChance + rareChance;
@@ -138,7 +148,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
         if (roll < commonChance) {
             // Récompenses communes
-            List<String> commonItems = config.getStringList("mystery_boxes.basic_box.rewards.common.items");
+            List<String> commonItems = config.getStringList("mystery_boxes." + boxId + ".rewards.common.items");
             for (String item : commonItems) {
                 String[] itemData = item.split(":");
                 Material material = Material.valueOf(itemData[0]);
@@ -147,12 +157,12 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             }
 
             // Exécution des commandes communes
-            List<String> commonCommands = config.getStringList("mystery_boxes.basic_box.rewards.common.command");
+            List<String> commonCommands = config.getStringList("mystery_boxes." + boxId + ".rewards.common.command");
             executeCommands(player, commonCommands);
 
         } else {
             // Récompenses rares
-            List<String> rareItems = config.getStringList("mystery_boxes.basic_box.rewards.rare.items");
+            List<String> rareItems = config.getStringList("mystery_boxes." + boxId + ".rewards.rare.items");
             for (String item : rareItems) {
                 String[] itemData = item.split(":");
                 Material material = Material.valueOf(itemData[0]);
@@ -161,7 +171,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             }
 
             // Exécution des commandes rares
-            List<String> rareCommands = config.getStringList("mystery_boxes.basic_box.rewards.rare.command");
+            List<String> rareCommands = config.getStringList("mystery_boxes." + boxId + ".rewards.rare.command");
             executeCommands(player, rareCommands);
         }
     }
@@ -179,10 +189,14 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         ItemStack item = event.getResult();
         if (item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
             String itemName = item.getItemMeta().getDisplayName();
-            // Vérifier si l'item est une boîte mystère
-            if (itemName.equalsIgnoreCase(config.getString("mystery_boxes.basic_box.name"))) {
-                event.setResult(null); // Annuler le renommage
-                event.getInventory().setRepairCost(0);
+
+            // Vérifier si l'item correspond à une boîte mystère
+            for (String boxId : config.getConfigurationSection("mystery_boxes").getKeys(false)) {
+                if (itemName.equalsIgnoreCase(ChatColor.translateAlternateColorCodes('&', config.getString("mystery_boxes." + boxId + ".name")))) {
+                    event.setResult(null); // Annuler le renommage
+                    event.getInventory().setRepairCost(0);
+                    return;
+                }
             }
         }
     }
