@@ -1,0 +1,4 @@
+name: SkyX Mystery Box
+version: '1.1-SNAPSHOT'
+main: skyxnetwork.skyXMysteryBox.SkyXMysteryBox
+api-version: '1.20'
