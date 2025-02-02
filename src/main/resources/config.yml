@@ -1,0 +1,23 @@
+mystery_boxes:
+  basic_box:
+    name: "&aBasic Mystery Box"
+    material: PLAYER_HEAD
+    texture: "base64_texture_code_here"
+    lore:
+      - "&7Right-click to open!"
+      - "&fContains common rewards."
+    rewards:
+      common:
+        chance: 70
+        items:
+          - "IRON_INGOT:10"
+          - "GOLD_INGOT:5"
+        command:
+          - "tell %player% you have been rewarded"
+          - "iagive %player% arcanite:arcanite_helmet 1"
+      rare:
+        chance: 30
+        items:
+          - "DIAMOND:2"
+        command:
+          - "give %player% minecraft:diamond_sword 1"

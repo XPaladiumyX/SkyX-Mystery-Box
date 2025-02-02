@@ -2,3 +2,11 @@ name: SkyX Mystery Box
 version: '1.1-SNAPSHOT'
 main: skyxnetwork.skyXMysteryBox.SkyXMysteryBox
 api-version: '1.20'
+commands:
+  skyxmysterybox:
+    description: Command for the SkyX Mystery Box plugin
+    usage: /<command>
+permissions:
+  skyxmysterybox.use:
+    description: Permission to use the SkyX Mystery Box
+    default: true
