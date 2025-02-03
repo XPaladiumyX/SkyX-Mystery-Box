@@ -196,11 +196,14 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         if (!allRewards.isEmpty()) {
             String reward = allRewards.get(new Random().nextInt(allRewards.size()));
 
-            if (reward.contains(":")) {
-                // Gestion des items
+            if (reward.toLowerCase().startsWith("give ") || reward.contains("{")) {
+                // Si la récompense ressemble à une commande /give complexe, on l'exécute directement
+                executeCommands(player, Collections.singletonList(reward));
+            } else if (reward.contains(":")) {
+                // Gestion des items simples
                 try {
                     String[] parts = reward.split(":");
-                    String materialName = parts[0].toUpperCase().replace("MINECRAFT:", ""); // Corrige la casse et le préfixe
+                    String materialName = parts[0].toUpperCase().replace("MINECRAFT:", "");
                     Material material = Material.matchMaterial(materialName);
 
                     if (material == null) {
@@ -208,14 +211,14 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                         return;
                     }
 
-                    int amount = Integer.parseInt(parts[1]);
+                    int amount = (parts.length > 1) ? Integer.parseInt(parts[1]) : 1;
                     player.getInventory().addItem(new ItemStack(material, amount));
                 } catch (Exception e) {
                     player.sendMessage(ChatColor.RED + "Error while processing item reward: " + reward);
                     e.printStackTrace();
                 }
             } else {
-                // Gestion des commandes
+                // Gestion des commandes basiques
                 executeCommands(player, Collections.singletonList(reward));
             }
         }
@@ -223,12 +226,14 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
     private void executeCommands(Player player, List<String> commands) {
         for (String command : commands) {
-            // Remplacement des variables et support des couleurs
             command = command.replace("%player%", player.getName());
             command = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', command));
 
             try {
-                // Exécute toujours les commandes via la console pour éviter les problèmes de permissions
+                // Assurez-vous que les commandes ne commencent pas par un "/"
+                if (command.startsWith("/")) {
+                    command = command.substring(1);
+                }
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
             } catch (Exception e) {
                 player.sendMessage(ChatColor.RED + "Failed to execute command: " + command);
