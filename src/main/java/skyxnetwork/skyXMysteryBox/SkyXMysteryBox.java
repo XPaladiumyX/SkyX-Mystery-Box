@@ -144,6 +144,12 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             if (meta != null && meta.hasDisplayName()) {
                 for (String boxId : config.getConfigurationSection("mystery_boxes").getKeys(false)) {
                     if (meta.getDisplayName().equalsIgnoreCase(ChatColor.translateAlternateColorCodes('&', config.getString("mystery_boxes." + boxId + ".name")))) {
+                        // Vérification si l'inventaire du joueur est plein
+                        if (player.getInventory().firstEmpty() == -1) {
+                            player.sendMessage(ChatColor.RED + "Your inventory is full! Cannot open the Consumable Item.");
+                            event.setCancelled(true);
+                            return;
+                        }
                         event.setCancelled(true);
                         consumeMysteryBox(player, item, boxId);
                         return;
