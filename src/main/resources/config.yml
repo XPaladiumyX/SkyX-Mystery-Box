@@ -7,6 +7,7 @@ mystery_boxes:
       - "&7Right-click to open!"
       - "&fContains common rewards."
       - "&6★ &eWorth: &a11.99k"
+    sound: "minecraft:entity.player.levelup"
     rewards:
       common:
         chance: 50
