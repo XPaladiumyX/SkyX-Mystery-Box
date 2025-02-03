@@ -188,15 +188,24 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         }
 
         List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
-        for (String command : commands) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("%player%", player.getName()));
-        }
+        executeCommands(player, commands);
     }
 
     private void executeCommands(Player player, List<String> commands) {
         for (String command : commands) {
             command = command.replace("%player%", player.getName());
-            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
+            command = ChatColor.translateAlternateColorCodes('&', command); // Support des couleurs
+
+            if (command.startsWith("/say") || command.startsWith("/tell") || command.startsWith("/msg")) {
+                String[] parts = command.split(" ", 2);
+                if (parts.length == 2) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parts[0] + " " + ChatColor.translateAlternateColorCodes('&', parts[1]));
+                } else {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                }
+            } else {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            }
         }
     }
 
