@@ -139,13 +139,11 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
 
-        if (item != null && event.getAction().toString().contains("RIGHT_CLICK") && item.getAmount() > 0) {
+        if (item != null && event.getAction().toString().contains("RIGHT_CLICK")) {
             ItemMeta meta = item.getItemMeta();
             if (meta != null && meta.hasDisplayName()) {
-                String itemName = meta.getDisplayName();
-
                 for (String boxId : config.getConfigurationSection("mystery_boxes").getKeys(false)) {
-                    if (itemName.equalsIgnoreCase(ChatColor.translateAlternateColorCodes('&', config.getString("mystery_boxes." + boxId + ".name")))) {
+                    if (meta.getDisplayName().equalsIgnoreCase(ChatColor.translateAlternateColorCodes('&', config.getString("mystery_boxes." + boxId + ".name")))) {
                         event.setCancelled(true);
                         consumeMysteryBox(player, item, boxId);
                         return;
@@ -162,30 +160,35 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
     private void giveReward(Player player, String boxId) {
         Random rand = new Random();
-        int commonChance = config.getInt("mystery_boxes." + boxId + ".rewards.common.chance");
-        int rareChance = config.getInt("mystery_boxes." + boxId + ".rewards.rare.chance");
-        int totalChance = commonChance + rareChance;
+        int roll = rand.nextInt(100) + 1;
+        int cumulativeChance = 0;
 
-        int roll = rand.nextInt(totalChance);
+        for (String rarity : Arrays.asList("legendary", "epic", "rare", "common")) {
+            if (config.contains("mystery_boxes." + boxId + ".rewards." + rarity)) {
+                int chance = config.getInt("mystery_boxes." + boxId + ".rewards." + rarity + ".chance");
+                cumulativeChance += chance;
 
-        if (roll < commonChance) {
-            distributeRewards(player, boxId, "common");
-        } else {
-            distributeRewards(player, boxId, "rare");
+                if (roll <= cumulativeChance) {
+                    distributeRewards(player, boxId, rarity);
+                    return;
+                }
+            }
         }
     }
 
     private void distributeRewards(Player player, String boxId, String rewardType) {
         List<String> items = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".items");
-        for (String item : items) {
-            String[] itemData = item.split(":");
-            Material material = Material.valueOf(itemData[0]);
-            int amount = Integer.parseInt(itemData[1]);
+        for (String itemData : items) {
+            String[] parts = itemData.split(":");
+            Material material = Material.valueOf(parts[0]);
+            int amount = Integer.parseInt(parts[1]);
             player.getInventory().addItem(new ItemStack(material, amount));
         }
 
         List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
-        executeCommands(player, commands);
+        for (String command : commands) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("%player%", player.getName()));
+        }
     }
 
     private void executeCommands(Player player, List<String> commands) {
