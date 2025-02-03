@@ -37,40 +37,46 @@ mystery_boxes:
     lore:
       - "&7Right-click to open!"
       - "&fContains common rewards."
+      - "&6★ &eWorth: &a11.99k"
+    sound: "minecraft:entity.player.levelup"
     rewards:
       common:
-        chance: 70
+        chance: 50
         items:
           - "IRON_INGOT:10"
           - "GOLD_INGOT:5"
         command:
-          - "tell %player% you have been rewarded"
-          - "iagive %player% arcanite:arcanite_helmet 1"
+          - "give %player% diamond 1"
+        message:
+          - "tell %player% &7★ &fYou have received a &aCommon &freward! &7★"
       rare:
         chance: 30
         items:
           - "DIAMOND:2"
         command:
           - "give %player% minecraft:diamond_sword 1"
-  epic_box:
-    name: "&dEpic Mystery Box"
-    material: PLAYER_HEAD
-    texture: "another_base64_texture_code"
-    lore:
-      - "&6Right-click to reveal epic loot!"
-      - "&fHigher chance for rare items!"
-    rewards:
-      rare:
-        chance: 50
+        message:
+          - "tell %player% &7★ &fYou have received a &aRare &freward! &7★"
+      epic:
+        chance: 15
         items:
-          - "ENCHANTED_BOOK:1:sharpness,4"
-      legendary:
-        chance: 10
-        items:
-          - "NETHERITE_INGOT:1"
+          - "DIAMOND:2"
+          - "ANCIENT_DEBRIS:4"
         command:
           - "give %player% minecraft:netherite_sword 1"
-          - "say %player% just got an epic item!"
+          - "give %player% minecraft:netherite_helmet 1"
+        message:
+          - "tell %player% &7★ &fYou have received a &aEpic &freward! &7★"
+      legendary:
+        chance: 5
+        items:
+          - "DIAMOND_BLOCK:10"
+          - "NETHERITE_INGOT:1"
+        command:
+          - "give %player% minecraft:shulker_box 1"
+          - "eco add %player% 20000"
+        message:
+          - "tell %player% &7★ &fYou have received a &aLegendary &freward! &7★"
 ```
 ### Key Configuration Options:  
   - name: Name of the Mystery Box (can be customized).  
