@@ -180,15 +180,31 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
     private void distributeRewards(Player player, String boxId, String rewardType) {
         List<String> items = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".items");
-        for (String itemData : items) {
-            String[] parts = itemData.split(":");
-            Material material = Material.valueOf(parts[0]);
-            int amount = Integer.parseInt(parts[1]);
-            player.getInventory().addItem(new ItemStack(material, amount));
+        List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
+        String message = config.getString("mystery_boxes." + boxId + ".rewards." + rewardType + ".message");
+
+        // Affiche le message de récompense
+        if (message != null && !message.isEmpty()) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), message.replace("%player%", player.getName()));
         }
 
-        List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
-        executeCommands(player, commands);
+        // Combine les items et les commandes pour une sélection aléatoire
+        List<String> allRewards = new ArrayList<>();
+        allRewards.addAll(items);
+        allRewards.addAll(commands);
+
+        if (!allRewards.isEmpty()) {
+            String reward = allRewards.get(new Random().nextInt(allRewards.size()));
+
+            if (reward.contains(":")) { // C'est un item
+                String[] parts = reward.split(":");
+                Material material = Material.valueOf(parts[0]);
+                int amount = Integer.parseInt(parts[1]);
+                player.getInventory().addItem(new ItemStack(material, amount));
+            } else { // C'est une commande
+                executeCommands(player, Collections.singletonList(reward));
+            }
+        }
     }
 
     private void executeCommands(Player player, List<String> commands) {
