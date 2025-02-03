@@ -181,14 +181,12 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
     private void distributeRewards(Player player, String boxId, String rewardType) {
         List<String> items = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".items");
         List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
-        String message = config.getString("mystery_boxes." + boxId + ".rewards." + rewardType + ".message");
+        List<String> messages = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".message");
 
-        // Affiche le message de récompense
-        if (message != null && !message.isEmpty()) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), message.replace("%player%", player.getName()));
+        for (String msg : messages) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg.replace("%player%", player.getName())));
         }
 
-        // Combine les items et les commandes pour une sélection aléatoire
         List<String> allRewards = new ArrayList<>();
         allRewards.addAll(items);
         allRewards.addAll(commands);
@@ -196,12 +194,12 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         if (!allRewards.isEmpty()) {
             String reward = allRewards.get(new Random().nextInt(allRewards.size()));
 
-            if (reward.contains(":")) { // C'est un item
+            if (reward.contains(":")) {
                 String[] parts = reward.split(":");
                 Material material = Material.valueOf(parts[0]);
                 int amount = Integer.parseInt(parts[1]);
                 player.getInventory().addItem(new ItemStack(material, amount));
-            } else { // C'est une commande
+            } else {
                 executeCommands(player, Collections.singletonList(reward));
             }
         }
