@@ -160,15 +160,17 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
     private void giveReward(Player player, String boxId) {
         Random rand = new Random();
-        int roll = rand.nextInt(100) + 1;
+        int roll = rand.nextInt(100) + 1;  // Valeur de 1 à 100
         int cumulativeChance = 0;
 
-        for (String rarity : Arrays.asList("legendary", "epic", "rare", "common")) {
+        List<String> rarities = Arrays.asList("legendary", "epic", "rare", "common");  // Vérifier de la rare à la plus commune
+
+        for (String rarity : rarities) {
             if (config.contains("mystery_boxes." + boxId + ".rewards." + rarity)) {
                 int chance = config.getInt("mystery_boxes." + boxId + ".rewards." + rarity + ".chance");
                 cumulativeChance += chance;
 
-                if (roll <= cumulativeChance) {
+                if (roll <= cumulativeChance) {  // Corrige la logique de comparaison
                     distributeRewards(player, boxId, rarity);
                     return;
                 }
