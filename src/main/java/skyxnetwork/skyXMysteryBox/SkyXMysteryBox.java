@@ -183,10 +183,12 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         List<String> commands = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".command");
         List<String> messages = config.getStringList("mystery_boxes." + boxId + ".rewards." + rewardType + ".message");
 
+        // Envoi des messages de récompense
         for (String msg : messages) {
             player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg.replace("%player%", player.getName())));
         }
 
+        // Combine les items et les commandes pour une sélection aléatoire
         List<String> allRewards = new ArrayList<>();
         allRewards.addAll(items);
         allRewards.addAll(commands);
@@ -195,11 +197,25 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             String reward = allRewards.get(new Random().nextInt(allRewards.size()));
 
             if (reward.contains(":")) {
-                String[] parts = reward.split(":");
-                Material material = Material.valueOf(parts[0]);
-                int amount = Integer.parseInt(parts[1]);
-                player.getInventory().addItem(new ItemStack(material, amount));
+                // Gestion des items
+                try {
+                    String[] parts = reward.split(":");
+                    String materialName = parts[0].toUpperCase().replace("MINECRAFT:", ""); // Corrige la casse et le préfixe
+                    Material material = Material.matchMaterial(materialName);
+
+                    if (material == null) {
+                        player.sendMessage(ChatColor.RED + "Invalid material: " + parts[0]);
+                        return;
+                    }
+
+                    int amount = Integer.parseInt(parts[1]);
+                    player.getInventory().addItem(new ItemStack(material, amount));
+                } catch (Exception e) {
+                    player.sendMessage(ChatColor.RED + "Error while processing item reward: " + reward);
+                    e.printStackTrace();
+                }
             } else {
+                // Gestion des commandes
                 executeCommands(player, Collections.singletonList(reward));
             }
         }
@@ -207,18 +223,16 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
     private void executeCommands(Player player, List<String> commands) {
         for (String command : commands) {
+            // Remplacement des variables et support des couleurs
             command = command.replace("%player%", player.getName());
-            command = ChatColor.translateAlternateColorCodes('&', command); // Support des couleurs
+            command = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', command));
 
-            if (command.startsWith("/say") || command.startsWith("/tell") || command.startsWith("/msg")) {
-                String[] parts = command.split(" ", 2);
-                if (parts.length == 2) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parts[0] + " " + ChatColor.translateAlternateColorCodes('&', parts[1]));
-                } else {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-                }
-            } else {
+            try {
+                // Exécute toujours les commandes via la console pour éviter les problèmes de permissions
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            } catch (Exception e) {
+                player.sendMessage(ChatColor.RED + "Failed to execute command: " + command);
+                e.printStackTrace();
             }
         }
     }
