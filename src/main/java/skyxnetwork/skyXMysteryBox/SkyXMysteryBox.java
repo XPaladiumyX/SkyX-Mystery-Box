@@ -29,6 +29,8 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         this.saveDefaultConfig();
         this.config = getConfig();
         Bukkit.getServer().getPluginManager().registerEvents(this, this);
+        getCommand("givemysterybox").setTabCompleter(new MysteryBoxTabCompleter(this));  // Pass the main plugin instance
+        getCommand("skyxmysterybox").setTabCompleter(new SkyXTabCompleter());
         getLogger().info("SkyX Mystery Box plugin enabled!");
     }
 
