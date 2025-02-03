@@ -87,6 +87,15 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
                 targetPlayer.getInventory().addItem(boxItem);
                 sender.sendMessage("Gave " + targetPlayerName + " a " + boxName + "!");
+
+                // Nouvelle section ajoutée pour gérer la commande depuis le fichier YAML
+                List<String> boxCommands = config.getStringList("mystery_boxes." + boxId + ".commands");
+                for (String commandStr : boxCommands) {
+                    if (commandStr != null && !commandStr.isEmpty()) {
+                        executeCommand(commandStr, sender, targetPlayer);
+                    }
+                }
+
             } else {
                 sender.sendMessage("Box ID '" + boxId + "' not found in the config.");
             }
@@ -165,6 +174,26 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                     }
                 }
             }
+        }
+    }
+
+    // Nouvelle méthode pour exécuter les commandes lues depuis le fichier YAML
+    private void executeCommand(String commandStr, CommandSender sender, Player targetPlayer) {
+        // Remplace %player% par le nom du joueur dans la commande
+        String command = commandStr.replace("%player%", targetPlayer.getName());
+
+        // Enlève les couleurs (si nécessaire) et exécute la commande
+        command = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', command));
+
+        try {
+            // Assurez-vous que les commandes ne commencent pas par un "/"
+            if (command.startsWith("/")) {
+                command = command.substring(1);
+            }
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        } catch (Exception e) {
+            sender.sendMessage(ChatColor.RED + "Failed to execute command: " + command);
+            e.printStackTrace();
         }
     }
 
