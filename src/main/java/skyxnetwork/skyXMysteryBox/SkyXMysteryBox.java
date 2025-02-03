@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -232,6 +233,15 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg.replace("%player%", player.getName())));
         }
 
+        // Gestion des items personnalisés via "give"
+        ConfigurationSection rewardSection = config.getConfigurationSection("mystery_boxes." + boxId + ".rewards." + rewardType + ".give");
+        if (rewardSection != null) {
+            for (String itemKey : rewardSection.getKeys(false)) {
+                ItemStack customItem = CustomItemBuilder.buildItem(rewardSection.getConfigurationSection(itemKey));
+                player.getInventory().addItem(customItem);
+            }
+        }
+
         // Combine les items et les commandes pour une sélection aléatoire
         List<String> allRewards = new ArrayList<>();
         allRewards.addAll(items);
@@ -242,13 +252,13 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
             // Vérification si la récompense est une commande /give complexe ou un item classique
             if (reward.toLowerCase().startsWith("give ") && reward.contains("{")) {
-                // Si la récompense ressemble à une commande /give complexe, on l'exécute avec JSON
+                // Commande /give complexe avec JSON
                 executeGiveWithJson(player, reward);
             } else if (reward.toLowerCase().startsWith("give ") || reward.contains("{")) {
-                // Si la récompense est une commande simple ou item classique avec JSON
+                // Commande simple ou item classique avec JSON
                 executeCommands(player, Collections.singletonList(reward));
             } else if (reward.contains(":")) {
-                // Gestion des items simples
+                // Gestion des items simples (ex: "DIAMOND:3")
                 try {
                     String[] parts = reward.split(":");
                     String materialName = parts[0].toUpperCase().replace("MINECRAFT:", "");
@@ -271,6 +281,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             }
         }
     }
+
 
     private void executeGiveWithJson(Player player, String reward) {
         try {
