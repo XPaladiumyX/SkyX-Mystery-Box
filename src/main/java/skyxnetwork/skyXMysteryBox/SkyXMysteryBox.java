@@ -152,6 +152,13 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                             event.setCancelled(true);
                             return;
                         }
+
+                        // Lecture du son
+                        String sound = config.getString("mystery_boxes." + boxId + ".sound");
+                        if (sound != null && !sound.isEmpty()) {
+                            player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
+                        }
+
                         event.setCancelled(true);
                         consumeMysteryBox(player, item, boxId);
                         return;
