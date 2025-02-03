@@ -211,8 +211,12 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
         if (!allRewards.isEmpty()) {
             String reward = allRewards.get(new Random().nextInt(allRewards.size()));
 
-            if (reward.toLowerCase().startsWith("give ") || reward.contains("{")) {
-                // Si la récompense ressemble à une commande /give complexe, on l'exécute directement
+            // Vérification si la récompense est une commande /give complexe ou un item classique
+            if (reward.toLowerCase().startsWith("give ") && reward.contains("{")) {
+                // Si la récompense ressemble à une commande /give complexe, on l'exécute avec JSON
+                executeGiveWithJson(player, reward);
+            } else if (reward.toLowerCase().startsWith("give ") || reward.contains("{")) {
+                // Si la récompense est une commande simple ou item classique avec JSON
                 executeCommands(player, Collections.singletonList(reward));
             } else if (reward.contains(":")) {
                 // Gestion des items simples
@@ -236,6 +240,20 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                 // Gestion des commandes basiques
                 executeCommands(player, Collections.singletonList(reward));
             }
+        }
+    }
+
+    private void executeGiveWithJson(Player player, String reward) {
+        try {
+            // Exécution de la commande /give avec des JSON complexes
+            String command = reward.replace("%player%", player.getName());
+            if (command.startsWith("/")) {
+                command = command.substring(1); // Supprime le / initial
+            }
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        } catch (Exception e) {
+            player.sendMessage(ChatColor.RED + "Failed to execute give command with JSON: " + reward);
+            e.printStackTrace();
         }
     }
 
