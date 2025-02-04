@@ -1,5 +1,5 @@
 name: SkyXMysteryBox
-version: '1.1-SNAPSHOT'
+version: '1.2-FINAL'
 main: skyxnetwork.skyXMysteryBox.SkyXMysteryBox
 api-version: '1.20'
 commands:
