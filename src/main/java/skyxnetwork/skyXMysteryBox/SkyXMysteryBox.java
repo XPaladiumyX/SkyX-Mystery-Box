@@ -280,11 +280,16 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
             if (reward instanceof String) {
                 String rewardStr = (String) reward;
 
+                // Traitement des commandes JSON complexes avec /give
                 if (rewardStr.toLowerCase().startsWith("give ") && rewardStr.contains("{")) {
                     executeGiveWithJson(player, rewardStr);
-                } else if (rewardStr.toLowerCase().startsWith("give ") || rewardStr.contains("{")) {
+                }
+                // Si la chaîne contient des espaces, on considère que c'est une commande à exécuter
+                else if (rewardStr.contains(" ")) {
                     executeCommands(player, Collections.singletonList(rewardStr));
-                } else if (rewardStr.contains(":")) {
+                }
+                // Traitement des items Minecraft (avec ou sans namespace)
+                else if (rewardStr.contains(":")) {
                     try {
                         String[] parts = rewardStr.split(":");
                         String materialName = parts[0].toUpperCase().replace("MINECRAFT:", "");
@@ -301,11 +306,20 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
                         player.sendMessage(ChatColor.RED + "Error while processing item reward: " + rewardStr);
                         e.printStackTrace();
                     }
-                } else {
-                    executeCommands(player, Collections.singletonList(rewardStr));
                 }
-            } else if (reward instanceof ConfigurationSection) {
-                // Si la récompense est un item personnalisé (section de config)
+                // Si ce n'est ni une commande ni un item avec namespace, on vérifie s'il s'agit d'un simple item Minecraft
+                else {
+                    Material material = Material.matchMaterial(rewardStr.toUpperCase());
+                    if (material != null) {
+                        player.getInventory().addItem(new ItemStack(material, 1));
+                    } else {
+                        // Si ce n'est pas un item valide, on tente de l'exécuter comme une commande finale
+                        executeCommands(player, Collections.singletonList(rewardStr));
+                    }
+                }
+            }
+            // Si la récompense est un item personnalisé (section de config)
+            else if (reward instanceof ConfigurationSection) {
                 ItemStack customItem = CustomItemBuilder.buildItem((ConfigurationSection) reward);
                 player.getInventory().addItem(customItem);
             }
