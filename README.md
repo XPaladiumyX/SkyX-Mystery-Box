@@ -33,7 +33,7 @@ mystery_boxes:
   basic_box:
     name: "&aBasic Mystery Box"
     material: PLAYER_HEAD
-    texture: "base64_texture_code_here"
+    texture: "base64_texture_code_here_just_a_minecraft_head_link" #example texture: "http://textures.minecraft.net/texture/cc23ae30848b1b58b75942f40ae8560c23be82dc9b3a777a0d3d63f4164cca68" (Source : https://minecraft-heads.com)
     lore:
       - "&7Right-click to open!"
       - "&fContains common rewards."
@@ -75,6 +75,29 @@ mystery_boxes:
         command:
           - "give %player% minecraft:shulker_box 1"
           - "eco add %player% 20000"
+        give:
+          legendary_crown_of_immortality:
+            material: NETHERITE_HELMET
+            amount: 1
+            custom_model_data: 00001
+            display:
+              name: '§6✪ Legendary Crown of Immortality'
+              italic: false
+              lore:
+                - '§eWorn by the eternal kings.'
+                - '§6Grants near-invincibility to its bearer.'
+            enchantments:
+              - id: PROTECTION
+                level: 5
+              - id: UNBREAKING
+                level: 4
+              - id: MENDING
+                level: 1
+              - id: RESPIRATION
+                level: 3
+            tags:
+              Unbreakable: true
+              HideFlags: 4
         message:
           - "tell %player% &7★ &fYou have received a &aLegendary &freward! &7★"
 ```
