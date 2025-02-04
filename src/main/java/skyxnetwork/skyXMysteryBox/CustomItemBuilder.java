@@ -44,10 +44,14 @@ public class CustomItemBuilder {
         if (itemConfig.contains("enchantments")) {
             List<Map<?, ?>> enchantments = itemConfig.getMapList("enchantments");
             for (Map<?, ?> enchantmentMap : enchantments) {
-                Enchantment enchantment = Enchantment.getByName((String) enchantmentMap.get("id"));
-                int level = (int) enchantmentMap.get("level");
+                String enchantId = ((String) enchantmentMap.get("id")).toLowerCase(); // Convertir en minuscule
+                Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantId)); // Utilisation de getByKey
+
                 if (enchantment != null) {
+                    int level = (int) enchantmentMap.get("level");
                     meta.addEnchant(enchantment, level, true);
+                } else {
+                    Bukkit.getLogger().warning("Invalid enchantment ID: " + enchantId);
                 }
             }
         }
@@ -56,8 +60,17 @@ public class CustomItemBuilder {
         if (itemConfig.contains("tags")) {
             ConfigurationSection tags = itemConfig.getConfigurationSection("tags");
             for (String key : tags.getKeys(false)) {
-                meta.getPersistentDataContainer().set(new NamespacedKey(Bukkit.getPluginManager().getPlugin("SkyXMysteryBox"), key),
-                        PersistentDataType.STRING, tags.get(key).toString());
+                if (key.equalsIgnoreCase("Unbreakable")) {
+                    // Gestion spécifique pour le tag Unbreakable
+                    meta.setUnbreakable(tags.getBoolean(key));
+                } else {
+                    // Pour les autres tags personnalisés
+                    meta.getPersistentDataContainer().set(
+                            new NamespacedKey(Bukkit.getPluginManager().getPlugin("SkyXMysteryBox"), key),
+                            PersistentDataType.STRING,
+                            tags.get(key).toString()
+                    );
+                }
             }
         }
 
