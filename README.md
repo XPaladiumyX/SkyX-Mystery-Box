@@ -75,6 +75,29 @@ mystery_boxes:
         command:
           - "give %player% minecraft:shulker_box 1"
           - "eco add %player% 20000"
+        give:
+          legendary_crown_of_immortality:
+            material: NETHERITE_HELMET
+            amount: 1
+            custom_model_data: 00001
+            display:
+              name: '§6✪ Legendary Crown of Immortality'
+              italic: false
+              lore:
+                - '§eWorn by the eternal kings.'
+                - '§6Grants near-invincibility to its bearer.'
+            enchantments:
+              - id: PROTECTION
+                level: 5
+              - id: UNBREAKING
+                level: 4
+              - id: MENDING
+                level: 1
+              - id: RESPIRATION
+                level: 3
+            tags:
+              Unbreakable: true
+              HideFlags: 4
         message:
           - "tell %player% &7★ &fYou have received a &aLegendary &freward! &7★"
 ```
