@@ -143,7 +143,8 @@ You can adjust everything in ``config.yml`` without modifying any code, allowing
 
 ## 🔗 Links & Resources  
 
-  - **GitHub Repository**: [SkyX Mystery Box Plugin](https://github.com/XPaladiumyX/SkyX-Mystery-Box)  
+  - **GitHub Repository**: [SkyX Mystery Box Plugin](https://github.com/XPaladiumyX/SkyX-Mystery-Box)
+  - **Plugin Wiki**: [Wiki](https://github.com/XPaladiumyX/SkyX-Mystery-Box/wiki)  
   - **Discord**: Join our community for support and discussions!  
       - [Join Discord Server](https://discord.gg/pTErYjTh5h)
         
