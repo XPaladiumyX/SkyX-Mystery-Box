@@ -235,49 +235,52 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
         // Gestion des items personnalisés via "give"
         ConfigurationSection rewardSection = config.getConfigurationSection("mystery_boxes." + boxId + ".rewards." + rewardType + ".give");
-        if (rewardSection != null) {
-            for (String itemKey : rewardSection.getKeys(false)) {
-                ItemStack customItem = CustomItemBuilder.buildItem(rewardSection.getConfigurationSection(itemKey));
-                player.getInventory().addItem(customItem);
-            }
-        }
 
-        // Combine les items et les commandes pour une sélection aléatoire
-        List<String> allRewards = new ArrayList<>();
+        // Combine les items, les commandes et les récompenses personnalisées pour une sélection aléatoire
+        List<Object> allRewards = new ArrayList<>();
         allRewards.addAll(items);
         allRewards.addAll(commands);
 
+        if (rewardSection != null) {
+            for (String itemKey : rewardSection.getKeys(false)) {
+                allRewards.add(rewardSection.getConfigurationSection(itemKey)); // Ajouter la config de l'item pour la randomisation
+            }
+        }
+
         if (!allRewards.isEmpty()) {
-            String reward = allRewards.get(new Random().nextInt(allRewards.size()));
+            Object reward = allRewards.get(new Random().nextInt(allRewards.size()));
 
-            // Vérification si la récompense est une commande /give complexe ou un item classique
-            if (reward.toLowerCase().startsWith("give ") && reward.contains("{")) {
-                // Commande /give complexe avec JSON
-                executeGiveWithJson(player, reward);
-            } else if (reward.toLowerCase().startsWith("give ") || reward.contains("{")) {
-                // Commande simple ou item classique avec JSON
-                executeCommands(player, Collections.singletonList(reward));
-            } else if (reward.contains(":")) {
-                // Gestion des items simples (ex: "DIAMOND:3")
-                try {
-                    String[] parts = reward.split(":");
-                    String materialName = parts[0].toUpperCase().replace("MINECRAFT:", "");
-                    Material material = Material.matchMaterial(materialName);
+            if (reward instanceof String) {
+                String rewardStr = (String) reward;
 
-                    if (material == null) {
-                        player.sendMessage(ChatColor.RED + "Invalid material: " + parts[0]);
-                        return;
+                if (rewardStr.toLowerCase().startsWith("give ") && rewardStr.contains("{")) {
+                    executeGiveWithJson(player, rewardStr);
+                } else if (rewardStr.toLowerCase().startsWith("give ") || rewardStr.contains("{")) {
+                    executeCommands(player, Collections.singletonList(rewardStr));
+                } else if (rewardStr.contains(":")) {
+                    try {
+                        String[] parts = rewardStr.split(":");
+                        String materialName = parts[0].toUpperCase().replace("MINECRAFT:", "");
+                        Material material = Material.matchMaterial(materialName);
+
+                        if (material == null) {
+                            player.sendMessage(ChatColor.RED + "Invalid material: " + parts[0]);
+                            return;
+                        }
+
+                        int amount = (parts.length > 1) ? Integer.parseInt(parts[1]) : 1;
+                        player.getInventory().addItem(new ItemStack(material, amount));
+                    } catch (Exception e) {
+                        player.sendMessage(ChatColor.RED + "Error while processing item reward: " + rewardStr);
+                        e.printStackTrace();
                     }
-
-                    int amount = (parts.length > 1) ? Integer.parseInt(parts[1]) : 1;
-                    player.getInventory().addItem(new ItemStack(material, amount));
-                } catch (Exception e) {
-                    player.sendMessage(ChatColor.RED + "Error while processing item reward: " + reward);
-                    e.printStackTrace();
+                } else {
+                    executeCommands(player, Collections.singletonList(rewardStr));
                 }
-            } else {
-                // Gestion des commandes basiques
-                executeCommands(player, Collections.singletonList(reward));
+            } else if (reward instanceof ConfigurationSection) {
+                // Si la récompense est un item personnalisé (section de config)
+                ItemStack customItem = CustomItemBuilder.buildItem((ConfigurationSection) reward);
+                player.getInventory().addItem(customItem);
             }
         }
     }
