@@ -31,12 +31,21 @@ public class CustomItemBuilder {
         // Display Name & Lore
         if (itemConfig.contains("display")) {
             ConfigurationSection display = itemConfig.getConfigurationSection("display");
+            boolean italic = display.getBoolean("italic", false); // Valeur par défaut : false
+
             if (display.contains("name")) {
-                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', display.getString("name")));
+                String name = display.getString("name");
+                // Appliquer ou désactiver l'italique
+                name = (italic ? "§o" : "§r") + ChatColor.translateAlternateColorCodes('&', name);
+                meta.setDisplayName(name);
             }
+
             if (display.contains("lore")) {
                 List<String> lore = display.getStringList("lore");
-                meta.setLore(lore.stream().map(line -> ChatColor.translateAlternateColorCodes('&', line)).toList());
+                List<String> formattedLore = lore.stream()
+                        .map(line -> (italic ? "§o" : "§r") + ChatColor.translateAlternateColorCodes('&', line))
+                        .toList();
+                meta.setLore(formattedLore);
             }
         }
 
