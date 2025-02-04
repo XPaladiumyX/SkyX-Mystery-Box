@@ -51,7 +51,6 @@ mystery_boxes:
             custom_model_data: 00001
             display:
               name: '§6✪ Legendary Crown of Immortality'
-              italic: false
               lore:
                 - '§eWorn by the eternal kings.'
                 - '§6Grants near-invincibility to its bearer.'
