@@ -33,7 +33,7 @@ mystery_boxes:
   basic_box:
     name: "&aBasic Mystery Box"
     material: PLAYER_HEAD
-    texture: "base64_texture_code_here"
+    texture: "base64_texture_code_here_just_a_minecraft_head_link" #example texture: "http://textures.minecraft.net/texture/cc23ae30848b1b58b75942f40ae8560c23be82dc9b3a777a0d3d63f4164cca68" (Source : https://minecraft-heads.com)
     lore:
       - "&7Right-click to open!"
       - "&fContains common rewards."
