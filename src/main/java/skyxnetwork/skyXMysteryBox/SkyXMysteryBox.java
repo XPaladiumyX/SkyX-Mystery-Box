@@ -161,7 +161,7 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
 
             UUID textureUUID = UUID.nameUUIDFromBytes(textureUrl.getBytes());
 
-            // ⚠️ Fix = donner un nom NON NULL
+
             com.mojang.authlib.GameProfile profile =
                     new com.mojang.authlib.GameProfile(textureUUID, "mysterybox");
 
