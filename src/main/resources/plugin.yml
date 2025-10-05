@@ -1,0 +1,25 @@
+name: SkyXMysteryBox
+version: '1.2-FINAL'
+main: skyxnetwork.skyXMysteryBox.SkyXMysteryBox
+api-version: '1.20'
+commands:
+  givemysterybox:
+    description: Give a specific Mystery Box to a player.
+    usage: /givemysterybox <player> <box_id>
+    permission: skyxmysterybox.give
+    permission-message: You don't have permission to execute this command.
+  skyxmysterybox:
+    description: Reload the SkyX Mystery Box plugin configuration.
+    usage: /skyxmysterybox reload
+    permission: skyxmysterybox.reload
+    permission-message: You don't have permission to execute this command.
+permissions:
+  skyxmysterybox.use:
+    description: Permission to use the SkyX Mystery Box
+    default: true
+  skyxmysterybox.give:
+    description: Permission to give a Mystery Box to a player
+    default: op
+  skyxmysterybox.reload:
+    description: Permission to reload the plugin configuration
+    default: op
