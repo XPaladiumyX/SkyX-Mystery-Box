@@ -155,27 +155,34 @@ public final class SkyXMysteryBox extends JavaPlugin implements Listener {
     public static void applyTextureToItem(ItemStack item, String base64Texture, String textureUrl) {
         if (item.getType() != Material.PLAYER_HEAD) return;
 
-        ItemMeta itemMeta = item.getItemMeta();
-        if (itemMeta instanceof SkullMeta) {
-            SkullMeta skullMeta = (SkullMeta) itemMeta;
+        ItemMeta meta = item.getItemMeta();
+        if (!(meta instanceof SkullMeta skullMeta)) return;
 
-            UUID textureUUID = UUID.nameUUIDFromBytes(textureUrl.getBytes());
-
-
+        try {
+            // ✅ Création du GameProfile sans toucher aux champs privés
+            UUID id = UUID.nameUUIDFromBytes(textureUrl.getBytes());
             com.mojang.authlib.GameProfile profile =
-                    new com.mojang.authlib.GameProfile(textureUUID, "mysterybox");
+                    new com.mojang.authlib.GameProfile(id, "custom_head");
 
+            // ✅ Ajout de la texture dans les propriétés
             profile.getProperties().put("textures",
                     new com.mojang.authlib.properties.Property("textures", base64Texture));
 
-            try {
-                java.lang.reflect.Field field = skullMeta.getClass().getDeclaredField("profile");
-                field.setAccessible(true);
-                field.set(skullMeta, profile);
-                item.setItemMeta(skullMeta);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
+            // ✅ Conversion en ResolvableProfile via le constructeur officiel
+            Class<?> resolvableProfileClass = Class.forName("net.minecraft.world.item.component.ResolvableProfile");
+            Object resolvableProfile = resolvableProfileClass
+                    .getDeclaredConstructor(com.mojang.authlib.GameProfile.class)
+                    .newInstance(profile);
+
+            // ✅ On remplit le SkullMeta via la méthode Spigot/Mojang
+            java.lang.reflect.Method setProfileMethod =
+                    skullMeta.getClass().getDeclaredMethod("setProfile", resolvableProfileClass);
+            setProfileMethod.setAccessible(true);
+            setProfileMethod.invoke(skullMeta, resolvableProfile);
+
+            item.setItemMeta(skullMeta);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
