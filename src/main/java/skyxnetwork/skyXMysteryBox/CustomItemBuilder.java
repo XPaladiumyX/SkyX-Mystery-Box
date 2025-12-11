@@ -15,69 +15,78 @@ import java.util.Map;
 
 public class CustomItemBuilder {
 
-    public static ItemStack buildItem(ConfigurationSection itemConfig) {
-        Material material = Material.matchMaterial(itemConfig.getString("material", "STONE"));
-        if (material == null) material = Material.STONE;
+    public static ItemStack buildItem(ConfigurationSection section) {
 
-        int amount = itemConfig.getInt("amount", 1);
-        ItemStack item = new ItemStack(material, amount);
+        // Material sécurisé
+        Material material = Material.matchMaterial(section.getString("material", "STONE"));
+        if (material == null) {
+            Bukkit.getLogger().warning("[SkyXMysteryBox] Invalid material: " + section.getString("material"));
+            material = Material.STONE;
+        }
+
+        ItemStack item = new ItemStack(material, section.getInt("amount", 1));
         ItemMeta meta = item.getItemMeta();
 
-        // Custom Model Data
-        if (itemConfig.contains("custom_model_data")) {
-            meta.setCustomModelData(itemConfig.getInt("custom_model_data"));
+        // Custom model data
+        if (section.contains("custom_model_data")) {
+            meta.setCustomModelData(section.getInt("custom_model_data"));
         }
 
-        // Display Name & Lore
-        if (itemConfig.contains("display")) {
-            ConfigurationSection display = itemConfig.getConfigurationSection("display");
+        // Display
+        ConfigurationSection display = section.getConfigurationSection("display");
+        if (display != null) {
 
-            if (display.contains("name")) {
-                String name = ChatColor.translateAlternateColorCodes('&', display.getString("name"));
-                meta.setDisplayName(name);
-            }
+            if (display.contains("name"))
+                meta.setDisplayName(color(display.getString("name")));
 
             if (display.contains("lore")) {
-                List<String> lore = display.getStringList("lore");
-                meta.setLore(lore.stream().map(line -> ChatColor.translateAlternateColorCodes('&', line)).toList());
+                List<String> lore = display.getStringList("lore")
+                        .stream().map(CustomItemBuilder::color).toList();
+                meta.setLore(lore);
             }
         }
 
-        // Enchantements
-        if (itemConfig.contains("enchantments")) {
-            List<Map<?, ?>> enchantments = itemConfig.getMapList("enchantments");
-            for (Map<?, ?> enchantmentMap : enchantments) {
-                String enchantId = ((String) enchantmentMap.get("id")).toLowerCase(); // Convertir en minuscule
-                Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantId)); // Utilisation de getByKey
+        // Enchantements améliorés
+        if (section.contains("enchantments")) {
+            for (Map<?, ?> enchantMap : section.getMapList("enchantments")) {
 
-                if (enchantment != null) {
-                    int level = (int) enchantmentMap.get("level");
-                    meta.addEnchant(enchantment, level, true);
-                } else {
-                    Bukkit.getLogger().warning("Invalid enchantment ID: " + enchantId);
+                String id = ((String) enchantMap.get("id")).toLowerCase();
+                if (id.contains(":")) id = id.split(":")[1];
+
+                Enchantment ench = Enchantment.getByKey(NamespacedKey.minecraft(id));
+                if (ench == null) {
+                    Bukkit.getLogger().warning("[SkyXMysteryBox] Invalid enchant ID: " + id);
+                    continue;
                 }
+
+                int level = (int) enchantMap.get("level");
+                meta.addEnchant(ench, level, true);
             }
         }
 
-        // Tags (NBT)
-        if (itemConfig.contains("tags")) {
-            ConfigurationSection tags = itemConfig.getConfigurationSection("tags");
+        // Tags avancés
+        if (section.contains("tags")) {
+            ConfigurationSection tags = section.getConfigurationSection("tags");
+
             for (String key : tags.getKeys(false)) {
-                if (key.equalsIgnoreCase("Unbreakable")) {
-                    // Gestion spécifique pour le tag Unbreakable
-                    meta.setUnbreakable(tags.getBoolean(key));
-                } else {
-                    // Pour les autres tags personnalisés
-                    meta.getPersistentDataContainer().set(
-                            new NamespacedKey(Bukkit.getPluginManager().getPlugin("SkyXMysteryBox"), key),
-                            PersistentDataType.STRING,
-                            tags.get(key).toString()
-                    );
+                Object raw = tags.get(key);
+                NamespacedKey nkey = new NamespacedKey("SkyXMysteryBox", key);
+
+                switch (raw) {
+                    case Integer v -> meta.getPersistentDataContainer().set(nkey, PersistentDataType.INTEGER, v);
+                    case Double v -> meta.getPersistentDataContainer().set(nkey, PersistentDataType.DOUBLE, v);
+                    case Boolean v ->
+                            meta.getPersistentDataContainer().set(nkey, PersistentDataType.BYTE, (byte) (v ? 1 : 0));
+                    default -> meta.getPersistentDataContainer().set(nkey, PersistentDataType.STRING, raw.toString());
                 }
             }
         }
 
         item.setItemMeta(meta);
         return item;
+    }
+
+    private static String color(String text) {
+        return ChatColor.translateAlternateColorCodes('&', text);
     }
 }
